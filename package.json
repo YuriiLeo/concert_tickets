@@ -1,7 +1,7 @@
 {
   "name": "tickets_test_task",
   "version": "1.0.0",
-  "description": "",
+  "description": "Concert Tickets API",
   "main": "index.js",
   "scripts": {
     "start": "ts-node --require tsconfig-paths/register src/main.ts",
