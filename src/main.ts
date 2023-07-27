@@ -30,7 +30,9 @@ app.post(
   createHandler({
     schema,
     rootValue: {
-      tickets: ticketController.getTicketByEventId,
+      tickets: ticketController.getTicketByEventId.bind(
+        ticketController
+      ),
     },
   })
 );

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { Ticket } from "entities/Ticket";
+import { Ticket } from "entities";
 import { ExternalApiService } from "external-api/services/external-api.service";
 import { Zone, Price, Seat } from "external-api/entities";
 
