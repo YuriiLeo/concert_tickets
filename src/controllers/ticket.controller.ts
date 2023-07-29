@@ -8,11 +8,15 @@ export class TicketController {
     this.ticketService = ticketService;
   }
 
-  getTicketByEventId({
-    eventId,
-  }: {
-    eventId: string;
-  }): Promise<Ticket[]> {
-    return this.ticketService.getTickets(eventId);
+  async getTicketByEventId(
+    eventId: string,
+    page: number,
+    pageSize: number
+  ): Promise<Ticket[]> {
+    return this.ticketService.getTickets(
+      eventId,
+      page,
+      pageSize
+    );
   }
 }

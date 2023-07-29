@@ -4,27 +4,60 @@ import { Ticket } from "entities";
 import { ExternalApiService } from "external-api/services/external-api.service";
 import { Zone, Price, Seat } from "external-api/entities";
 
+const CACHE_DURATION_MS = 60000;
+
 export class TicketService {
   externalApi: ExternalApiService;
+  cachedData: {
+    [key: string]: { timestamp: number; tickets: Ticket[] };
+  } = {};
 
   constructor(externalApi: ExternalApiService) {
     this.externalApi = externalApi;
   }
 
-  async getTickets(eventId: string): Promise<Ticket[]> {
+  async getTickets(
+    eventId: string,
+    page: number = 1,
+    pageSize: number = 50
+  ): Promise<Ticket[]> {
+    const cacheKey = `${eventId}_${page}_${pageSize}`;
+    const cachedData = this.cachedData[cacheKey];
+
+    if (
+      cachedData &&
+      Date.now() - cachedData.timestamp < CACHE_DURATION_MS
+    ) {
+      return cachedData.tickets;
+    }
     try {
       const [zonesData, pricesData, seatsData] =
         await Promise.all([
           this.externalApi.getZones(eventId),
           this.externalApi.getPrices(eventId),
-          this.externalApi.getSeats(eventId),
+          this.externalApi.getFilteredSeats(eventId),
         ]);
 
-      return this.mapDataToTickets(
+      const tickets = this.mapDataToTickets(
         zonesData,
         pricesData,
         seatsData
       );
+
+      const startIdx = (page - 1) * pageSize;
+      const endIdx = startIdx + pageSize;
+
+      const paginatedTickets = tickets.slice(
+        startIdx,
+        endIdx
+      );
+
+      this.cachedData[cacheKey] = {
+        timestamp: Date.now(),
+        tickets: paginatedTickets,
+      };
+
+      return paginatedTickets;
     } catch (error) {
       console.error("Error fetching tickets:", error);
       throw new Error(
@@ -41,21 +74,23 @@ export class TicketService {
     const tickets: Ticket[] = [];
 
     seatsData.forEach((seat) => {
-      const matchingPrice = pricesData.find(
-        (price) => price.ZoneId === seat.ZoneId
-      );
-      if (matchingPrice) {
-        const matchingZone = zonesData.find(
-          (zone) => zone.Id === seat.ZoneId
+      if (seat.AllocationId === 29) {
+        const matchingPrice = pricesData.find(
+          (price) => price.ZoneId === seat.ZoneId
         );
-        if (matchingZone) {
-          const ticket: Ticket = {
-            section: matchingZone.Description,
-            row: seat.SeatRow,
-            seatNumber: seat.SeatNumber,
-            price: matchingPrice.Price,
-          };
-          tickets.push(ticket);
+        if (matchingPrice) {
+          const matchingZone = zonesData.find(
+            (zone) => zone.Id === seat.ZoneId
+          );
+          if (matchingZone) {
+            const ticket: Ticket = {
+              section: matchingZone.Description,
+              row: seat.SeatRow,
+              seatNumber: seat.SeatNumber,
+              price: matchingPrice.Price,
+            };
+            tickets.push(ticket);
+          }
         }
       }
     });

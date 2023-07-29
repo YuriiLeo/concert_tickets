@@ -30,4 +30,13 @@ export class ExternalApiService {
 
     return data;
   }
+
+  async getFilteredSeats(eventId: string): Promise<Seat[]> {
+    const seatsData = await this.getSeats(eventId);
+    const filteredSeats = seatsData
+      .sort((seat1, seat2) => seat2.ZoneId - seat1.ZoneId)
+      .filter((seat) => seat.AllocationId !== 0);
+
+    return filteredSeats;
+  }
 }

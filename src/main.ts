@@ -14,7 +14,7 @@ const schema = buildSchema(`
     ${TicketSchema}
 
     type Query {
-        tickets(eventId: String!): [Ticket]!
+        tickets(eventId: String!, page: Int = 1, pageSize: Int = 50): [Ticket]!
     }
 `);
 
@@ -30,9 +30,15 @@ app.post(
   createHandler({
     schema,
     rootValue: {
-      tickets: ticketController.getTicketByEventId.bind(
-        ticketController
-      ),
+      tickets: (args: any) => {
+        const { eventId, page, pageSize } = args;
+
+        return ticketController.getTicketByEventId(
+          eventId,
+          page,
+          pageSize
+        );
+      },
     },
   })
 );
