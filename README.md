@@ -19,7 +19,7 @@ To get started with the project, follow these steps:
 curl -X POST \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "query GetTickets($eventId: String!) { tickets(eventId: $eventId) { section row seatNumber price } }",
+    "query": "query GetTickets($eventId: String!, $page: Int = 1, $pageSize: Int = 50) { tickets(eventId: $eventId, page: $page, pageSize: $pageSize) { totalTickets tickets { section row seatNumber price } } }",
     "variables": {
       "eventId": "1195"
     }
