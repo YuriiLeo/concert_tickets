@@ -6,10 +6,16 @@ import { Zone, Price, Seat } from "external-api/entities";
 
 const CACHE_DURATION_MS = 60000;
 
+type CachedTicketsData = {
+  timestamp: number;
+  totalTickets: number;
+  tickets: Ticket[];
+};
+
 export class TicketService {
   externalApi: ExternalApiService;
   cachedData: {
-    [key: string]: { timestamp: number; tickets: Ticket[] };
+    [key: string]: CachedTicketsData;
   } = {};
 
   constructor(externalApi: ExternalApiService) {
@@ -20,7 +26,10 @@ export class TicketService {
     eventId: string,
     page: number = 1,
     pageSize: number = 50
-  ): Promise<Ticket[]> {
+  ): Promise<{
+    totalTickets: number;
+    tickets: Ticket[];
+  }> {
     const cacheKey = `${eventId}_${page}_${pageSize}`;
     const cachedData = this.cachedData[cacheKey];
 
@@ -28,7 +37,10 @@ export class TicketService {
       cachedData &&
       Date.now() - cachedData.timestamp < CACHE_DURATION_MS
     ) {
-      return cachedData.tickets;
+      return {
+        totalTickets: cachedData.totalTickets,
+        tickets: cachedData.tickets,
+      };
     }
     try {
       const [zonesData, pricesData, seatsData] =
@@ -44,6 +56,8 @@ export class TicketService {
         seatsData
       );
 
+      const totalTickets = tickets.length;
+
       const startIdx = (page - 1) * pageSize;
       const endIdx = startIdx + pageSize;
 
@@ -54,10 +68,14 @@ export class TicketService {
 
       this.cachedData[cacheKey] = {
         timestamp: Date.now(),
+        totalTickets,
         tickets: paginatedTickets,
       };
 
-      return paginatedTickets;
+      return {
+        totalTickets,
+        tickets: paginatedTickets,
+      };
     } catch (error) {
       console.error("Error fetching tickets:", error);
       throw new Error(

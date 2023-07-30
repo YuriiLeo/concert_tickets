@@ -13,9 +13,18 @@ const PORT = 3000;
 const schema = buildSchema(`
     ${TicketSchema}
 
-    type Query {
-        tickets(eventId: String!, page: Int = 1, pageSize: Int = 50): [Ticket]!
-    }
+  type Query {
+    tickets(
+      eventId: String!
+      page: Int = 1
+      pageSize: Int = 50
+    ): TicketResponse!
+  }
+
+  type TicketResponse {
+    totalTickets: Int!
+    tickets: [Ticket]!
+  }
 `);
 
 // TODO improve with DI

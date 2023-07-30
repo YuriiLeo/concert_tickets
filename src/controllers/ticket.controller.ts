@@ -12,7 +12,10 @@ export class TicketController {
     eventId: string,
     page: number,
     pageSize: number
-  ): Promise<Ticket[]> {
+  ): Promise<{
+    totalTickets: number;
+    tickets: Ticket[];
+  }> {
     return this.ticketService.getTickets(
       eventId,
       page,
